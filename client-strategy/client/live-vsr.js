@@ -6,9 +6,16 @@ class VideoSpeechRecognition {
       endpoint           : '',
       headers            : { },
 
-      // todo: actually utilize this
-      aheadPlayheadLimit : 30,  // seconds
-      behindPlayheadLimit: 30
+      tracks: {
+        metadata: {
+          initial: 'hidden'
+        },
+        subtitles: {
+          name: 'English (auto-generated)',
+          lang: 'en',
+          initial: 'showing'
+        }
+      }
     }
 
     this._onTick            = this._onTick.bind(this)
@@ -76,16 +83,7 @@ class VideoSpeechRecognition {
 
   start () {
     this._createSocket()
-
-    let videoEl = this._media
-    let tracks = this._textTracks
-
-    if (!Object.keys(tracks).length) {
-      tracks.subtitles = videoEl.addTextTrack('subtitles', 'English (auto-generated)', 'en')
-      tracks.metadata = videoEl.addTextTrack('metadata')
-    }
-
-    Object.values(tracks).forEach(track => track.mode = 'hidden')
+    this._configureTextTracks()
 
     this._processInterval = setInterval(this._onTick, 1000)
     this._started = true
@@ -383,6 +381,20 @@ class VideoSpeechRecognition {
 
     window.URL.revokeObjectURL(url)
     document.body.removeChild(anchor)
+  }
+
+  _configureTextTracks () {
+    const trackOptions = this._options.tracks
+    const tracks = this._textTracks
+    const isPreconfigured = Object.keys(tracks).length > 0
+
+    if (!isPreconfigured) {
+      tracks.metadata = videoEl.addTextTrack('metadata')
+      tracks.subtitles = videoEl.addTextTrack('subtitles', trackOptions.subtitles.name, trackOptions.subtitles.lang)
+    }
+
+    tracks.metadata.mode = trackOptions.metadata.initial
+    tracks.subtitles.mode = trackOptions.subtitles.initial
   }
 
   _cleanTracks () {

@@ -2,17 +2,24 @@ class VideoSpeechRecognition {
 
   constructor (media, options) {
     let defaults = {
-      mode               : VideoSpeechRecognition.Mode.Live,
+      mode: VideoSpeechRecognition.Mode.Live,
 
-      // todo: actually utilize this
-      aheadPlayheadLimit : 30,  // seconds
-      behindPlayheadLimit: 30
+      tracks: {
+        metadata: {
+          initial: 'hidden'
+        },
+        subtitles: {
+          name: 'English (auto-generated)',
+          lang: 'en',
+          initial: 'showing'
+        }
+      }
     }
 
-    this._options           = Object.assign({}, defaults, options)
-    this._started           = false
-    this._media             = media
-    this._textTracks        = {}
+    this._options    = Object.assign({}, defaults, options)
+    this._started    = false
+    this._media      = media
+    this._textTracks = {}
   }
 
   static get Mode() {
@@ -23,21 +30,14 @@ class VideoSpeechRecognition {
   }
 
   start () {
-    let videoEl = this._media
-    let tracks = this._textTracks
+    if (this._started) return
 
-    if (!Object.keys(tracks).length) {
-      tracks.subtitles = videoEl.addTextTrack('subtitles', 'English (auto-generated)', 'en')
-      tracks.metadata = videoEl.addTextTrack('metadata')
-    }
-
-    Object.values(tracks).forEach(track => track.mode = 'hidden')
-
+    this._configureTextTracks()
     this._started = true
   }
 
   stop () {
-    if (this._started) return
+    if (!this._started) return
 
     this._cleanTracks()
     this._started = false
@@ -85,7 +85,7 @@ class VideoSpeechRecognition {
 
       let i = 0
       let cuesCount = cues.length
-      let expectedNumOfGroups = Math.floor( cuesCount / numPerGroup )
+      // let expectedNumOfGroups = Math.floor( cuesCount / numPerGroup )
       let group = []
 
       do {
@@ -167,6 +167,20 @@ class VideoSpeechRecognition {
     //      ^ Target range to remove cues in
     //
     // TODO
+  }
+
+  _configureTextTracks () {
+    const trackOptions = this._options.tracks
+    const tracks = this._textTracks
+    const isPreconfigured = Object.keys(tracks).length > 0
+
+    if (!isPreconfigured) {
+      tracks.metadata = videoEl.addTextTrack('metadata')
+      tracks.subtitles = videoEl.addTextTrack('subtitles', trackOptions.subtitles.name, trackOptions.subtitles.lang)
+    }
+
+    tracks.metadata.mode = trackOptions.metadata.initial
+    tracks.subtitles.mode = trackOptions.subtitles.initial
   }
 
   _cleanTracks () {

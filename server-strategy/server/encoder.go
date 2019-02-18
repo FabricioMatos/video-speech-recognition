@@ -55,17 +55,13 @@ func main() {
 		"-bsf:a", "aac_adtstoasc",
 		"-hls_segment_type", "fmp4",
 		"-hls_time", "10",
-		"-hls_list_size", "24",
+		"-hls_list_size", "10",
 		"-hls_flags", "delete_segments+omit_endlist",
 		"-hls_segment_filename", segmentFilename,
 
 		"-b:v:0", "1000k",
 		"-s:v:0", "426x240",
 		"-b:a:0", "64k",
-
-		"-b:v:1", "1500k",
-		"-s:v:1", "640x360",
-		"-b:a:1", "128k",
 
 		"-b:v:2", "2000k",
 		"-s:v:2", "896x504",
@@ -78,9 +74,8 @@ func main() {
 		"-map", "0:v", "-map", "0:a",
 		"-map", "0:v", "-map", "0:a",
 		"-map", "0:v", "-map", "0:a",
-		"-map", "0:v", "-map", "0:a",
 
-		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2, v:3,a:3",
+		"-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2",
 		"-master_pl_name", "master.m3u8",
 		"-master_pl_publish_rate", "1",
 		"-hide_banner",
@@ -162,6 +157,13 @@ func transcriber() {
 						}
 					}
 
+				}
+
+				// Cleanup out-of-window working files as
+				// it ensures the ability to re-encode from working files if
+				// a problem is encountered in the first pass
+				if event.Op == fsnotify.Remove {
+					cleanupForFragment(event.Name)
 				}
 
 			case err := <-watcher.Errors:
@@ -325,8 +327,17 @@ func fileExists(path string) error {
 	return nil
 }
 
-func cleanup() {
-	// TODO cleanup out-of-window working files as
-	//      it ensures the ability to re-encode from working files if
-	//      a problem is encountered in the first pass
+func cleanupForFragment(fragFilepath string) {
+	segmentDir, segmentFilename := filepath.Split(fragFilepath)
+
+	transcriptionPath := fmt.Sprintf("%v/%v.json", segmentDir, segmentFilename)
+
+	tmpAACPath := fmt.Sprintf("tmp/input_%v.aac", segmentFilename)
+	tmpMP4Path := fmt.Sprintf("tmp/input_%v.mp4", segmentFilename)
+	tmpOGGPath := fmt.Sprintf("tmp/output_%v.ogg", segmentFilename)
+
+	os.Remove(transcriptionPath)
+	os.Remove(tmpAACPath)
+	os.Remove(tmpMP4Path)
+	os.Remove(tmpOGGPath)
 }

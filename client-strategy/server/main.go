@@ -152,6 +152,7 @@ func processAudio(raw []byte, conn *websocket.Conn) {
 	}
 
 	fmt.Println("[processAudio] successfully transcribed audio")
+	cleanupForID(id)
 	conn.WriteJSON(resp)
 }
 
@@ -163,4 +164,20 @@ func fileExists(path string) error {
 	}
 
 	return nil
+}
+
+func cleanupForID(tmpID int) {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("[cleanupForID] error Getwd(), err: ", err)
+		return
+	}
+
+	inputAACPath := fmt.Sprintf("%v/tmp/input_%v.aac", wd, tmpID)
+	inputMP4Path := fmt.Sprintf("%v/tmp/input_%v.mp4", wd, tmpID)
+	outputOGGPath := fmt.Sprintf("%v/tmp/output_%v.ogg", wd, tmpID)
+
+	os.Remove(inputAACPath)
+	os.Remove(inputMP4Path)
+	os.Remove(outputOGGPath)
 }
