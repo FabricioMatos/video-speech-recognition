@@ -136,10 +136,11 @@ func processAudio(raw []byte, conn *websocket.Conn) {
 	resp, err := client.Recognize(ctx, &speechpb.RecognizeRequest{
 		// TODO parameterize
 		Config: &speechpb.RecognitionConfig{
-			Encoding:              speechpb.RecognitionConfig_OGG_OPUS,
-			SampleRateHertz:       16000,
-			LanguageCode:          "en-US",
-			EnableWordTimeOffsets: true,
+			Encoding:                   speechpb.RecognitionConfig_OGG_OPUS,
+			SampleRateHertz:            16000,
+			LanguageCode:               "en-US",
+			EnableWordTimeOffsets:      true,
+			EnableAutomaticPunctuation: true, // This flag only works on English content
 		},
 		Audio: &speechpb.RecognitionAudio{
 			AudioSource: &speechpb.RecognitionAudio_Content{Content: data},
