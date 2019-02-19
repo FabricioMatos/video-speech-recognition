@@ -278,10 +278,11 @@ func processAudio(segmentPath string) {
 	resp, err := client.Recognize(ctx, &speechpb.RecognizeRequest{
 		// TODO parameterize
 		Config: &speechpb.RecognitionConfig{
-			Encoding:              speechpb.RecognitionConfig_OGG_OPUS,
-			SampleRateHertz:       16000,
-			LanguageCode:          "en-US",
-			EnableWordTimeOffsets: true,
+			Encoding:                   speechpb.RecognitionConfig_OGG_OPUS,
+			SampleRateHertz:            16000,
+			LanguageCode:               "en-US",
+			EnableWordTimeOffsets:      true,
+			EnableAutomaticPunctuation: true, // This flag only works on English content
 		},
 		Audio: &speechpb.RecognitionAudio{
 			AudioSource: &speechpb.RecognitionAudio_Content{Content: data},
@@ -294,8 +295,6 @@ func processAudio(segmentPath string) {
 		fmt.Println("[processAudio] Successfully transcribed audio for segment: ", segmentPath)
 		writeTranscriptionForSegment(resp, segmentPath)
 	}
-
-	// cleanup(inputMP4Path, inputAACPath, outputOGGPath)
 }
 
 func writeTranscriptionForSegment(data *speechpb.RecognizeResponse, path string) error {
