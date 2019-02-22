@@ -200,7 +200,7 @@ class VideoSpeechRecognition {
 
     if (this._options.mode === VideoSpeechRecognition.Mode.Live) {
       console.info('[VSR] onSocketMessage | live mode, pruning old cues')
-      this._pruneOldCues()
+      this._pruneOOWCues()
     }
 
     this._isBusy = false
@@ -246,7 +246,7 @@ class VideoSpeechRecognition {
 
       let i = 0
       let cuesCount = cues.length
-      let expectedNumOfGroups = Math.floor( cuesCount / numPerGroup )
+      // let expectedNumOfGroups = Math.floor( cuesCount / numPerGroup )
       let group = []
 
       do {
@@ -342,18 +342,9 @@ class VideoSpeechRecognition {
   }
 
   /**
-   * Removes cues that are behind the ( playhead - behindLimit )
+   * Removes cues that are outside the sliding window ( plus a configurable offset )
    */
-  _pruneOldCues () {
-    // (behind/ahead): ~
-    // playhead      : *
-    // buffered      : +
-    // past threshold: -
-    //
-    //   |-----|+++++++++++++++*++++++++++++++++++++++++++++++++++++++++++++++
-    //   |     |~~~~~~~~~~~~~~~*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //      ^ Target range to remove cues in
-    //
+  _pruneOOWCues () {
     // TODO
   }
 

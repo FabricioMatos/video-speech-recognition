@@ -52,7 +52,7 @@ class VideoSpeechRecognition {
 
     // if (this._options.mode === VideoSpeechRecognition.Mode.Live) {
     //   console.info('[VSR] processTranscriptionForRange | live mode, pruning old cues')
-    //   this._pruneOldCues()
+    //   this._pruneOOWCues()
     // }
   }
 
@@ -154,18 +154,9 @@ class VideoSpeechRecognition {
   }
 
   /**
-   * Removes cues that are behind the ( playhead - behindLimit )
+   * Removes cues that are outside the sliding window ( plus a configurable offset )
    */
-  _pruneOldCues () {
-    // (behind/ahead): ~
-    // playhead      : *
-    // buffered      : +
-    // past threshold: -
-    //
-    //   |-----|+++++++++++++++*++++++++++++++++++++++++++++++++++++++++++++++
-    //   |     |~~~~~~~~~~~~~~~*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //      ^ Target range to remove cues in
-    //
+  _pruneOOWCues () {
     // TODO
   }
 

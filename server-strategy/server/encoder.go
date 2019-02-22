@@ -192,6 +192,7 @@ func processAudio(segmentPath string) {
 	// TODO parameterize
 	err = fileExists("tmp")
 	if err != nil {
+		// TODO why 0777?
 		os.Mkdir("tmp", 0777)
 		fmt.Println("[processAudio] made tmp directory")
 	}
@@ -214,6 +215,7 @@ func processAudio(segmentPath string) {
 
 	blob := append(init, mdat...)
 
+	// TODO skip writing file, pass bytes directly to ffmpeg
 	inputMP4Path := fmt.Sprintf("%v/tmp/input_%v.mp4", wd, segmentFilename)
 
 	err = ioutil.WriteFile(inputMP4Path, blob, 0777)
@@ -222,15 +224,18 @@ func processAudio(segmentPath string) {
 		return
 	}
 
-	// Extracting the audio stream from mp4 -> aac
-	inputAACPath := fmt.Sprintf("%v/tmp/input_%v.aac", wd, segmentFilename)
+	/* Extracting the audio stream from mp4 and converting to ogg */
+	outputOGGPath := fmt.Sprintf("%v/tmp/output_%v.ogg", wd, segmentFilename)
 
 	cmd := exec.Command(
 		ffmpeg,
 		"-i", inputMP4Path,
 		"-vn",
-		"-acodec", "copy",
-		inputAACPath,
+		"-acodec", "libopus",
+		"-b:a", "64k",
+		"-ar", "16000",
+		"-ac", "1",
+		outputOGGPath,
 	)
 
 	err = cmd.Run()
@@ -239,35 +244,14 @@ func processAudio(segmentPath string) {
 		return
 	}
 
-	outputOGGPath := fmt.Sprintf("%v/tmp/output_%v.ogg", wd, segmentFilename)
-
-	// lossy audio is required to be encoded with libopus, according to API docs
-	cmd = exec.Command(
-		ffmpeg,
-		"-i", inputAACPath,
-		"-acodec", "libopus",
-		"-b:a", "64000", // 64k
-		"-ar", "16000", // 16kHz (required)
-		"-ac", "1",
-		outputOGGPath,
-	)
-
-	err = cmd.Run()
-	if err != nil {
-		fmt.Println("[processAudio] Could not transcode audio stream from aac -> ogg opus: ", err)
-		return
-	}
-
-	// Reads the audio file into memory.
 	data, err := ioutil.ReadFile(outputOGGPath)
 	if err != nil {
-		fmt.Println("[processAudio] Failed to read file: ", err)
+		fmt.Println("[processAudio] Failed to read ogg file: ", outputOGGPath, err)
 		return
 	}
 
 	ctx := context.Background()
 
-	// Creates a client.
 	client, err := speech.NewClient(ctx)
 	if err != nil {
 		fmt.Println("[processAudio] Could not create speech client: ", err)
@@ -331,12 +315,10 @@ func cleanupForFragment(fragFilepath string) {
 
 	transcriptionPath := fmt.Sprintf("%v/%v.json", segmentDir, segmentFilename)
 
-	tmpAACPath := fmt.Sprintf("tmp/input_%v.aac", segmentFilename)
 	tmpMP4Path := fmt.Sprintf("tmp/input_%v.mp4", segmentFilename)
 	tmpOGGPath := fmt.Sprintf("tmp/output_%v.ogg", segmentFilename)
 
 	os.Remove(transcriptionPath)
-	os.Remove(tmpAACPath)
 	os.Remove(tmpMP4Path)
 	os.Remove(tmpOGGPath)
 }

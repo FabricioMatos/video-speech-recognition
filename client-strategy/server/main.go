@@ -17,6 +17,7 @@ import (
 )
 
 const ffmpeg = "../../bin/ffmpeg"
+const port = 13000
 
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -27,11 +28,13 @@ var wsupgrader = websocket.Upgrader{
 	},
 }
 
-var addr = flag.String("addr", "localhost:13000", "http service address")
+var addr = flag.String("addr", fmt.Sprintf("localhost:%v", port), "http service address")
 
 func main() {
 	flag.Parse()
 	http.HandleFunc("/speech-recognition", handler)
+
+	fmt.Println("[main] listening on port: ", port)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
 
@@ -58,6 +61,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func processAudio(raw []byte, conn *websocket.Conn) {
 	var err error
 
+	// TODO possible collisions?
 	id := rand.Intn(100)
 
 	wd, err := os.Getwd()
@@ -69,24 +73,17 @@ func processAudio(raw []byte, conn *websocket.Conn) {
 	// TODO parameterize
 	err = fileExists("tmp")
 	if err != nil {
+		// TODO why 0777?
 		_ = os.Mkdir("tmp", 0777)
 		fmt.Println("[processAudio] made tmp directory")
 	}
 
+	// TODO skip writing file, pass bytes directly to ffmpeg
 	inputMP4Path := fmt.Sprintf("%v/tmp/input_%v.mp4", wd, id)
 
 	err = ioutil.WriteFile(inputMP4Path, raw, 0777)
 	if err != nil {
 		fmt.Println("[processAudio] could not write bytes to disk, err: ", err)
-		return
-	}
-
-	ctx := context.Background()
-
-	// Creates a client.
-	client, err := speech.NewClient(ctx)
-	if err != nil {
-		fmt.Println("[processAudio] could not create speech client: ", err)
 		return
 	}
 
@@ -129,6 +126,14 @@ func processAudio(raw []byte, conn *websocket.Conn) {
 	data, err := ioutil.ReadFile(outputOGGPath)
 	if err != nil {
 		fmt.Println("[processAudio] failed to read output OGG file: ", err)
+		return
+	}
+
+	ctx := context.Background()
+
+	client, err := speech.NewClient(ctx)
+	if err != nil {
+		fmt.Println("[processAudio] could not create speech client: ", err)
 		return
 	}
 
