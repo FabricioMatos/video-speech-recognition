@@ -16,13 +16,15 @@ import (
 	speechpb "google.golang.org/genproto/googleapis/cloud/speech/v1"
 )
 
-const ffmpeg = "../../bin/ffmpeg"
+var ffmpeg = os.Getenv("FFMPEG_PATH")
+
 const port = 13000
 
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 
+	// No `Origin` request checks needed
 	CheckOrigin: func(h *http.Request) bool {
 		return true
 	},

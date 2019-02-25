@@ -21,8 +21,7 @@ import (
 	speechpb "google.golang.org/genproto/googleapis/cloud/speech/v1"
 )
 
-const ffmpeg = "../../bin/ffmpeg"
-
+var ffmpeg = os.Getenv("FFMPEG_PATH")
 var transcriptionHistory map[string]bool
 
 func main() {
