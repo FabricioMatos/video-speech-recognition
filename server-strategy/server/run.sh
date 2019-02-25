@@ -3,6 +3,8 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/video-speech-recognition/gcp/ser
 export FFMPEG_PATH="/path/to/video-speech-recognition/bin/ffmpeg"
 
 rm -rf content
+mkdir content
+
 rm -rf tmp
 
 go run encoder.go
